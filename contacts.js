@@ -11,7 +11,7 @@ async function loadData() {
 }
 
 async function saveData(data) {
-  await fs.writeFile(contactsPath, data);
+  await fs.writeFile(contactsPath, JSON.stringify(data, null, 2));
 }
 
 async function listContacts() {
@@ -21,27 +21,26 @@ async function listContacts() {
 
 async function getContactById(contactId) {
   const data = await loadData();
-  return data.find((el) => el.id === String(contactId)) || null;
+  const contact = data.find((el) => el.id === String(contactId));
+  return contact || null;
 }
 
 async function removeContact(contactId) {
   const data = await loadData();
-  await saveData(
-    JSON.stringify(
-      data.filter((el) => el.id !== String(contactId)),
-      null,
-      2
-    )
-  );
-  return "done";
+  const index = data.findIndex(({ id }) => id === String(contactId));
+  if (index === -1) return null;
+  const [contact] = data.splice(index, 1);
+  await saveData(data);
+  return contact;
 }
 
 async function addContact(name, email, phone) {
   const data = await loadData();
   const id = uuidv4();
-  data.push({ id, name, email, phone });
-  const answer = await saveData(JSON.stringify(data, null, 2));
-  return await getContactById(id);
+  const contact = { id, name, email, phone };
+  data.push(contact);
+  await saveData(data);
+  return contact;
 }
 
 module.exports = { listContacts, getContactById, removeContact, addContact };
